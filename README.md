@@ -1,5 +1,5 @@
 # Daemon
-This is an extension of the ![](github.com/sevlyar/go-daemon) library.
+This is an extension of the ![github.com/sevlyar/go-daemon](github.com/sevlyar/go-daemon) library.
 It is an example and a template of how to create a simple daemon that
 behaves how you would expect a Unix daemon to behave.
 
