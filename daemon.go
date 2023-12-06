@@ -15,6 +15,7 @@ var (
   stop — fast shutdown
   reload — reloading the configuration file`)
 	execute = flag.String("e", "", "ask the daemon to execute a process")
+	// SigSet  = flag.NewFlagSet("")
 )
 
 var (
@@ -22,12 +23,29 @@ var (
 	sockAddr = createSocket(sock)
 )
 
-func main() {
+func init() {
+	flag.StringVar(_signal, "signal", "", "Send signal to the daemon")
 	flag.Parse()
 	daemon.AddCommand(daemon.StringFlag(_signal, "quit"), syscall.SIGQUIT, termHandler)
 	daemon.AddCommand(daemon.StringFlag(_signal, "stop"), syscall.SIGTERM, termHandler)
 	daemon.AddCommand(daemon.StringFlag(_signal, "reload"), syscall.SIGHUP, reloadHandler)
 
+	// ./daemon stop VS ./daemon --signal stop
+	// you could also add another FlagSet and decide to parse it here, to make use of sub-commands
+	args := flag.Args()
+	if len(args) >= 1 {
+		switch args[0] {
+		case "stop":
+			*_signal = "stop"
+		case "quit":
+			*_signal = "quit"
+		case "reload":
+			*_signal = "reload"
+		}
+	}
+}
+
+func main() {
 	cntxt := &daemon.Context{
 		PidFileName: "sample.pid",
 		PidFilePerm: 0644,
@@ -35,7 +53,7 @@ func main() {
 		LogFilePerm: 0640,
 		WorkDir:     "./",
 		Umask:       027,
-		Args:        []string{"[go-daemon sample]"},
+		Args:        []string{"[go-daemon]"},
 	}
 
 	if *execute != "" {
@@ -51,12 +69,17 @@ func main() {
 		}
 	}
 
+	// NOTE: if you dont cleanup pid file, this will give a nil pointer reference
 	if len(daemon.ActiveFlags()) > 0 {
 		d, err := cntxt.Search()
 		if err != nil {
 			log.Fatalf("Unable send signal to the daemon: %s", err.Error())
 		}
-		daemon.SendCommands(d)
+		if d != nil {
+			daemon.SendCommands(d)
+		} else {
+			log.Println("Daemon is not currently running")
+		}
 		return
 	}
 
