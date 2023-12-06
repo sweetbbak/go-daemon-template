@@ -44,6 +44,7 @@ func main() {
 			log.Fatal(err)
 		}
 
+		// check if daemon is running, if so, we send a message to the server to be handled
 		if d != nil {
 			Client(sockAddr, *execute)
 			os.Exit(0)
@@ -90,9 +91,10 @@ func worker() {
 LOOP:
 	for {
 
+		// serve and listen at our socket address
 		Server(sockAddr)
 
-		time.Sleep(time.Second) // this is work to be done by worker.
+		time.Sleep(time.Millisecond * 500) // this is work to be done by worker.
 		select {
 		case <-stop:
 			break LOOP
